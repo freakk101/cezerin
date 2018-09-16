@@ -1,97 +1,106 @@
-import React from 'react'
-import { NavLink } from 'react-router-dom'
-import * as helper from '../../lib/helper'
-import { themeSettings, text } from '../../lib/settings'
-import CustomProductList from './custom'
-
-const Fragment = React.Fragment;
+import React from 'react';
+import PropTypes from 'prop-types';
+import { text } from '../../lib/settings';
+import CustomProductList from './custom';
 
 export default class ViewedProducts extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      viewedProducts: []
-    }
-  }
+	static propTypes = {
+		limit: PropTypes.number.isRequired,
+		settings: PropTypes.shape({}).isRequired,
+		addCartItem: PropTypes.func.isRequired,
+		product: PropTypes.shape({}).isRequired
+	};
 
-  getArrayFromLocalStorage = () => {
-    let values = [];
-    let viewedProducts = localStorage.getItem("viewedProducts");
+	state = {
+		viewedProducts: []
+	};
 
-    try{
-      if(viewedProducts && viewedProducts.length > 0){
-        let viewedProductsParsed = JSON.parse(viewedProducts);
-        if(Array.isArray(viewedProductsParsed)){
-          values = viewedProductsParsed;
-        }
-      }
-    } catch(e){};
+	componentDidMount() {
+		const { product } = this.props;
+		const viewedProducts = this.getArrayFromLocalStorage();
+		this.setState({ viewedProducts });
 
-    return values;
-  }
+		if (product && product.id) {
+			this.addProductIdToLocalStorage(product.id);
+		}
+	}
 
-  addProductIdToLocalStorage = productId => {
-    if(productId && productId.length > 0){
-      let viewedProducts = this.getArrayFromLocalStorage();
+	componentWillReceiveProps(nextProps) {
+		if (
+			this.props.product !== nextProps.product &&
+			nextProps.product &&
+			nextProps.product.id
+		) {
+			this.addProductIdToLocalStorage(nextProps.product.id);
+		}
+	}
 
-      if(viewedProducts.includes(productId)){
-        const index = viewedProducts.indexOf(productId);
-        viewedProducts.splice(index, 1);
-        viewedProducts.push(productId);
-      } else {
-        viewedProducts.push(productId);
-      }
+	shouldComponentUpdate(nextProps, nextState) {
+		return this.state.viewedProducts !== nextState.viewedProducts;
+	}
 
-      localStorage.setItem('viewedProducts', JSON.stringify(viewedProducts));
-      this.setState({ viewedProducts: viewedProducts });
-    }
-  }
+	getArrayFromLocalStorage = () => {
+		let values = [];
+		const viewedProducts = localStorage.getItem('viewedProducts');
 
-  componentDidMount() {
-    const viewedProducts = this.getArrayFromLocalStorage();
-    this.setState({ viewedProducts: viewedProducts });
+		try {
+			if (viewedProducts && viewedProducts.length > 0) {
+				const viewedProductsParsed = JSON.parse(viewedProducts);
+				if (Array.isArray(viewedProductsParsed)) {
+					values = viewedProductsParsed;
+				}
+			}
+		} catch (e) {
+			//
+		}
 
-    if(this.props.product && this.props.product.id){
-      this.addProductIdToLocalStorage(this.props.product.id)
-    }
-  }
+		return values;
+	};
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return this.state.viewedProducts !== nextState.viewedProducts;
-  }
+	addProductIdToLocalStorage = productId => {
+		if (productId && productId.length > 0) {
+			const viewedProducts = this.getArrayFromLocalStorage();
 
-  componentWillReceiveProps(nextProps) {
-    if(this.props.product !== nextProps.product && nextProps.product && nextProps.product.id){
-      this.addProductIdToLocalStorage(nextProps.product.id)
-    }
-  }
+			if (viewedProducts.includes(productId)) {
+				const index = viewedProducts.indexOf(productId);
+				viewedProducts.splice(index, 1);
+				viewedProducts.push(productId);
+			} else {
+				viewedProducts.push(productId);
+			}
 
-  render() {
-    const { limit, settings, addCartItem, product } = this.props;
-    let { viewedProducts } = this.state;
+			localStorage.setItem('viewedProducts', JSON.stringify(viewedProducts));
+			this.setState({ viewedProducts });
+		}
+	};
 
-    if(viewedProducts && product && product.id){
-      viewedProducts = viewedProducts.filter(id => id !== product.id);
-    }
+	render() {
+		const { limit, settings, addCartItem, product } = this.props;
+		let { viewedProducts } = this.state;
 
-    if(viewedProducts && viewedProducts.length > 0){
-      const ids = viewedProducts.reverse().slice(0, limit);
-      return (
-        <section className="section section-product-related">
-          <div className="container">
-            <div className="title is-4 has-text-centered">{text.recentlyViewed}</div>
-            <CustomProductList
-              ids={ids}
-              settings={settings}
-              addCartItem={addCartItem}
-              limit={limit}
-              isCentered={true}
-            />
-          </div>
-        </section>
-      )
-    } else {
-      return null;
-    }
-  }
+		if (viewedProducts && product && product.id) {
+			viewedProducts = viewedProducts.filter(id => id !== product.id);
+		}
+
+		if (viewedProducts && viewedProducts.length > 0) {
+			const ids = viewedProducts.reverse().slice(0, limit);
+			return (
+				<section className="section section-product-related">
+					<div className="container">
+						<div className="title is-4 has-text-centered">
+							{text.recentlyViewed}
+						</div>
+						<CustomProductList
+							ids={ids}
+							settings={settings}
+							addCartItem={addCartItem}
+							limit={limit}
+							isCentered
+						/>
+					</div>
+				</section>
+			);
+		}
+		return null;
+	}
 }

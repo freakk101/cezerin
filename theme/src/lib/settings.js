@@ -1,22 +1,30 @@
-export let themeSettings = {};
-export let text = {};
+export let themeSettings = null;
+export let text = null;
+export let language = null;
+export let api = null;
 
-// Client - from Redux state
-if(typeof window !== 'undefined'){
-  const appText = window.__APP_TEXT__;
-  const appState = window.__APP_STATE__;
+const setVariables = options => {
+	if (options.themeSettings) {
+		({ themeSettings } = options);
+	}
 
-  if(appState.app.themeSettings){
-    themeSettings = appState.app.themeSettings;
-  }
+	if (options.text) {
+		({ text } = options);
+	}
 
-  if(appText){
-    text = appText;
-  }
-}
+	if (options.language) {
+		({ language } = options);
+	}
 
-// Server - from render page method
-export const updateThemeSettings = options => {
-  themeSettings = options.settings;
-  text = options.text;
-}
+	if (options.api) {
+		({ api } = options);
+	}
+};
+
+export const initOnClient = options => {
+	setVariables(options);
+};
+
+export const initOnServer = options => {
+	setVariables(options);
+};
